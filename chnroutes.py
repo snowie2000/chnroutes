@@ -11,10 +11,14 @@ import textwrap
 def generate_ovpn(metric):
     results = fetch_ip_data()  
     rfile=open('routes.txt','w')
-    for ip,mask,_ in results:
+    ipfile=open('iproutes.txt','w')
+    for ip,mask,_,length in results:
         route_item="route %s %s net_gateway %d\n"%(ip,mask,metric)
+        iproute_item="%s/%s\n"%(ip,length)
         rfile.write(route_item)
+        ipfile.write(iproute_item)
     rfile.close()
+    ipfile.close()
     print "Usage: Append the content of the newly created routes.txt to your openvpn config file," \
           " and also add 'max-routes %d', which takes a line, to the head of the file." % (len(results)+20)
 
@@ -219,11 +223,12 @@ def fetch_ip_data():
         #convert str to int
         mask=[ int(i,16 ) for i in mask]
         mask="%d.%d.%d.%d"%tuple(mask)
+        length=sum(bin(int(x)).count('1') for x in mask.split('.'))
         
         #mask in *nix format
         mask2=32-int(math.log(num_ip,2))
         
-        results.append((starting_ip,mask,mask2))
+        results.append((starting_ip,mask,mask2,length))
          
     return results
 
